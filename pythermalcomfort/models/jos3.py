@@ -1626,7 +1626,12 @@ class JOS3:
     # TODO all the properties should be returning JOS3BodyParts
     @property
     def t_skin(self) -> np.ndarray[float]:
-        """Skin temperatures of the 17 body segments, [°C]."""
+        """Skin temperatures of the 17 body segments, [°C].
+
+        The returned array is a copy, so ``model.t_skin[:] = 34.0`` does not change the
+        model. Assign to the property instead, e.g. ``model.t_skin = 34.0``. It accepts
+        a scalar, an array of 17 values, or a dict with the body part names as keys.
+        """
         return self._t_body[INDEX["skin"]].copy()
 
     @t_skin.setter
@@ -1635,8 +1640,17 @@ class JOS3:
 
     @property
     def t_core(self) -> np.ndarray[float]:
-        """Core temperatures of the 17 body segments, [°C]."""
+        """Core temperatures of the 17 body segments, [°C].
+
+        The returned array is a copy, so ``model.t_core[:] = 37.0`` does not change the
+        model. Assign to the property instead, e.g. ``model.t_core = 37.0``. It accepts
+        a scalar, an array of 17 values, or a dict with the body part names as keys.
+        """
         return self._t_body[INDEX["core"]].copy()
+
+    @t_core.setter
+    def t_core(self, inp):
+        self._t_body[INDEX["core"]] = to_array_body_parts(inp)
 
     @property
     def t_cb(self) -> float:
