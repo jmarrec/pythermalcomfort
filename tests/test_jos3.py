@@ -16,6 +16,7 @@ from pythermalcomfort.jos3_functions.construction import (
 )
 from pythermalcomfort.jos3_functions.matrix import (
     IDICT,
+    INDEX,
     LAYER_NAMES,
     NUM_NODES,
     index_by_layer,
@@ -1959,3 +1960,42 @@ def test_dict_results_subset_variables_align_with_results() -> None:
     assert flat["t_muscle_pelvis"][-1] == structured.t_muscle.pelvis[-1]
     assert flat["t_fat_head"][-1] == structured.t_fat.head[-1]
     assert flat["t_fat_pelvis"][-1] == structured.t_fat.pelvis[-1]
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        38.0,
+        np.linspace(36.0, 38.0, 17),
+        dict(
+            zip(
+                JOS3BodyParts.get_attribute_names(),
+                np.linspace(36.0, 38.0, 17),
+                strict=True,
+            )
+        ),
+    ],
+)
+def test_t_core_setter_changes_only_core_nodes(value) -> None:
+    """Setting t_core updates the core nodes and nothing else (#481)."""
+    model = JOS3()
+    before = model._t_body.copy()
+
+    model.t_core = value
+
+    np.testing.assert_array_equal(model.t_core, construction.to_array_body_parts(value))
+    other_nodes = np.ones(before.shape, dtype=bool)
+    other_nodes[INDEX["core"]] = False
+    np.testing.assert_array_equal(model._t_body[other_nodes], before[other_nodes])
+
+
+def test_t_core_and_t_skin_return_copies() -> None:
+    """In-place changes to the returned arrays do not change the model (#481)."""
+    model = JOS3()
+    t_core, t_skin = model.t_core, model.t_skin
+
+    model.t_core[:] = 30.0
+    model.t_skin[:] = 30.0
+
+    np.testing.assert_array_equal(model.t_core, t_core)
+    np.testing.assert_array_equal(model.t_skin, t_skin)

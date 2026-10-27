@@ -6,61 +6,61 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Python environment
 
-This project uses **pipenv** (the env PyCharm is linked to, Python 3.12). Always run
-Python tooling through `pipenv run` — never bare `pytest`/`python3`, never `uvx`, and
-never create a new virtualenv. Doing so produces a second, divergent environment: the
-repo already accumulated a stray 523 MB `.venv-docs/` that way, duplicating what
-`pipenv run tox -e docs` already does.
+This project uses **uv** (Python 3.12, pinned in `.python-version`; the dev tools are the
+`dev` group in `pyproject.toml`). Always run Python tooling through `uv run` — never bare
+`pytest`/`python3`, never `uvx`, and never create a new virtualenv. Doing so produces a
+second, divergent environment: the repo already accumulated a stray 523 MB `.venv-docs/`
+that way, duplicating what `uv run tox -e docs` already does.
 
 ```bash
-pipenv install --dev    # one-time setup
-pipenv run python -c "import sys; print(sys.executable)"   # confirm the env
+uv sync                 # one-time setup
+uv run python -c "import sys; print(sys.executable)"   # confirm the env
 ```
 
 ### Testing
 ```bash
 # Run all tests (add -n auto to run across CPU cores via pytest-xdist, ~5x faster)
-pipenv run pytest tests/
-pipenv run pytest tests/ -n auto
+uv run pytest tests/
+uv run pytest tests/ -n auto
 
 # Run single test file
-pipenv run pytest tests/test_pmv_ppd_iso.py
+uv run pytest tests/test_pmv_ppd_iso.py
 
 # Run specific test
-pipenv run pytest tests/test_pmv_ppd_iso.py::test_pmv_ppd
+uv run pytest tests/test_pmv_ppd_iso.py::test_pmv_ppd
 
 # Run tests matching pattern
-pipenv run pytest -k "pmv"
+uv run pytest -k "pmv"
 
 # Run with coverage
-pipenv run pytest tests/ --cov --cov-report=term-missing -vv
+uv run pytest tests/ --cov --cov-report=term-missing -vv
 
 # Full test suite via tox (tests Python 3.11-3.14)
-pipenv run tox
+uv run tox
 
 # Build the docs (do NOT hand-roll a sphinx venv — this env already exists)
-pipenv run tox -e docs
+uv run tox -e docs
 ```
 
 ### Linting and Formatting
 ```bash
 # Check formatting
-pipenv run ruff format --check ./pythermalcomfort ./tests
+uv run ruff format --check ./pythermalcomfort ./tests
 
 # Apply formatting (in-place)
-pipenv run ruff format ./pythermalcomfort ./tests
+uv run ruff format ./pythermalcomfort ./tests
 
 # Lint check
-pipenv run ruff check ./pythermalcomfort ./tests
+uv run ruff check ./pythermalcomfort ./tests
 
 # Lint with auto-fix
-pipenv run ruff check --fix ./pythermalcomfort ./tests
+uv run ruff check --fix ./pythermalcomfort ./tests
 
 # Format docstrings
-pipenv run docformatter -r -i --wrap-summaries 88 --wrap-descriptions 88 pythermalcomfort
+uv run docformatter -r -i --wrap-summaries 88 --wrap-descriptions 88 pythermalcomfort
 
 # Run pre-commit hooks manually
-pipenv run pre-commit run --all-files
+uv run pre-commit run --all-files
 ```
 
 ### CI/CD Workflow
@@ -194,6 +194,7 @@ is deferred to a major version.
 **Numba optimization**:
 - Performance-critical functions (e.g., UTCI) use `@vectorize` and `@jit` decorators
 - Allows element-wise operations without explicit Python loops
+- "Should we rewrite in Rust?" was benchmarked in 2026-10 and the answer was no: see `docs/contributing/performance.rst` before re-asking
 
 ### Key Module Interactions
 

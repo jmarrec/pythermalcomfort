@@ -4,6 +4,36 @@ Changelog
 Unreleased
 ----------
 
+* Fixed a discontinuity in SET from ``two_nodes_gagge``, ``set_tmp`` and
+  ``two_nodes_gagge_sleep``. When skin wettedness reached its maximum ``w_max``, the
+  model set the regulatory sweating fraction to ``w_max / 0.94`` instead of
+  ``(w_max - 0.06) / 0.94``, so the skin lost about 8 % more heat by evaporation than
+  just below the cap. SET could jump by up to 0.5 °C for a 0.001 °C change in air
+  temperature. The new formula follows Gagge et al. (1986) and JOS-3, and deliberately
+  departs from the ASHRAE 55 reference code, which has the same error. Results change
+  only where wettedness reaches ``w_max``, mostly hot conditions with high metabolic
+  rates. For example, ``cooling_effect`` returns 5.11 °C instead of 5.14 °C at
+  35 °C, 90 % RH, 1.5 m/s, 2.5 met and 0.2 clo, and ``disc`` is now exactly 4.7 at
+  the cap instead of 5.3-6.0.
+  ``pmv_ppd_ashrae`` (through the cooling effect) and ``use_fans_heatwaves`` results
+  change in the same conditions.
+  ``two_nodes_gagge`` now rejects a user-supplied ``w_max`` of 0.06 or less, above 1,
+  NaN or ``True``. Below 0.06 the sweating rate at the cap would be negative, and at
+  exactly 0.06 ``disc`` divided by zero. ``False`` and ``0`` still mean that the model
+  computes ``w_max`` from ``v`` and ``clo`` (`#489
+  <https://github.com/pythermalcomfort/pythermalcomfort/issues/489>`_).
+* Fixed the IP cooling effect conversion to use the Celsius-to-Fahrenheit
+  temperature difference factor of 1.8 (`#473
+  <https://github.com/pythermalcomfort/pythermalcomfort/issues/473>`_).
+* ``JOS3.t_core`` now has a setter, like ``t_skin``: ``model.t_core = 38.0`` sets the
+  core temperatures of all 17 segments (a scalar, an array of 17 values, or a dict of
+  body parts). Before, it raised ``AttributeError``. The ``t_core`` and ``t_skin``
+  docstrings now say that the returned arrays are copies, so ``model.t_core[:] = x``
+  does not change the model (`#481
+  <https://github.com/pythermalcomfort/pythermalcomfort/issues/481>`_).
+* Matplotlib plotting classes now accept ``font_family`` in ``plot()`` for a
+  per-chart font override while continuing to respect the global Matplotlib
+  ``font.family`` setting (#454).
 * Dropped support for Python 3.10, which reached end of life in October 2026.
   pythermalcomfort now requires Python 3.11 or later. Users on Python 3.10 keep
   getting 4.6.2 from pip.
